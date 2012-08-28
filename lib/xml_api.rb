@@ -1,6 +1,14 @@
 # Provide an interface for the Silverpop XMLAPI to
 # do basic interactions with the lead.
 module Silverpopper::XmlApi
+  class List
+    attr_accessor :id, :name
+
+    def initialize(id, name)
+      @id = id
+      @name = name
+    end
+  end
 
   # Authenticate through the xml api
   def login
@@ -246,6 +254,34 @@ module Silverpopper::XmlApi
     doc = send_xml_api_request(request_body)
     validate_silverpop_success!(doc, "Failure to update contact")
     result_dom(doc).elements['MAILING_ID'].first.to_s
+  end
+
+  def get_lists(options = {})
+    visibility = options.delete('visibility') || 1 # shared
+    list_type  = options.delete('visibility') || 0 # databases
+
+    request_body = String.new
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope{
+      xml.Body{
+        xml.GetLists{
+          xml.VISIBILITY visibility
+          xml.LIST_TYPE list_type
+        }
+      }
+    }
+
+    doc = send_xml_api_request(request_body)
+    puts doc.to_s
+    validate_silverpop_success!(doc, "Failure to fetch databases")
+
+    lists = []
+    result_dom(doc).elements.each('LIST') { |l|
+      lists << List.new(l.elements["ID"].first, l.elements["NAME"].first)
+    }
+    lists
   end
 
   def import_list(data, options = {})
