@@ -274,8 +274,7 @@ module Silverpopper::XmlApi
     }
 
     doc = send_xml_api_request(request_body)
-    puts doc.to_s
-    validate_silverpop_success!(doc, "Failure to fetch databases")
+    validate_silverpop_success!(doc, "Failure to fetch lists")
 
     lists = []
     result_dom(doc).elements.each('LIST') { |l|
