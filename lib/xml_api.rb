@@ -17,10 +17,10 @@ module Silverpopper::XmlApi
     }
 
     doc = send_xml_api_request(request_body)
-    validate_silverpop_success!(doc, "Failure to login to silverpop") 
+    validate_silverpop_success!(doc, "Failure to login to silverpop")
     self.session_id = result_dom(doc).elements['SESSIONID'].text
   end
-  
+
   # Expire the Session Id and forget the stored Session Id
   def logout
     request_body = String.new
@@ -109,7 +109,7 @@ module Silverpopper::XmlApi
     true
   end
 
-  # Request details for lead.  
+  # Request details for lead.
   #
   # expects a hash that contains the strings:
   # list_id, email.  Returns a hash containing properties
@@ -133,17 +133,17 @@ module Silverpopper::XmlApi
     doc = send_xml_api_request(request_body)
     validate_silverpop_success!(doc, "Failure to select contact")
 
-    result_dom(doc).elements['COLUMNS'].collect do |i| 
+    result_dom(doc).elements['COLUMNS'].collect do |i|
         i.respond_to?(:elements) ?  [i.elements['NAME'].first, i.elements['VALUE'].first] : nil
-      end.compact.inject(Hash.new) do |hash, value | 
-        hash.merge({value[0].to_s => (value[1].blank? ? nil : value[1].to_s)}) 
+      end.compact.inject(Hash.new) do |hash, value |
+        hash.merge({value[0].to_s => (value[1].blank? ? nil : value[1].to_s)})
     end
   end
 
   # Update the column values of a lead in silverpop.
   #
-  # expects a hash that contains the string: list_id, email.  
-  # additional values in the hash will be passed as column values, 
+  # expects a hash that contains the string: list_id, email.
+  # additional values in the hash will be passed as column values,
   # with the key being the column name, and the value being the value.
   # Returns the Recipient Id.
   def update_contact(options={})
@@ -175,9 +175,9 @@ module Silverpopper::XmlApi
     result_dom(doc).elements['RecipientId'].text rescue nil
   end
 
-  # Send an email to a user with a pre existing template.  
+  # Send an email to a user with a pre existing template.
   #
-  # expects a hash containing the strings: email, mailing_id.  
+  # expects a hash containing the strings: email, mailing_id.
   def send_mailing(options={})
     email, mailing_id = options.delete('email'), options.delete('mailing_id')
     request_body = String.new
@@ -198,10 +198,10 @@ module Silverpopper::XmlApi
     true
   end
 
-  # Schedule a mailing to be sent to an entire list. 
-  # expects a hash containing the keys with the strings: 
-  # list_id, template_id, mailing_name, subject, from_name, 
-  # from_address, reply_to.  Additional entries in the argument 
+  # Schedule a mailing to be sent to an entire list.
+  # expects a hash containing the keys with the strings:
+  # list_id, template_id, mailing_name, subject, from_name,
+  # from_address, reply_to.  Additional entries in the argument
   # will be treated as the substitution name, and substitution values.
   # Returns the Mailing Id.
   def schedule_mailing(options={})
@@ -231,7 +231,7 @@ module Silverpopper::XmlApi
           xml.REPLY_TO reply_to if reply_to != ''
           if options.length > 0
             xml.SUBSTITUTIONS{
-              options.each { |key, value|  
+              options.each { |key, value|
                 xml.SUBSTITUTION{
                   xml.NAME key
                   xml.VALUE value
@@ -242,10 +242,88 @@ module Silverpopper::XmlApi
         }
       }
     }
-    
+
     doc = send_xml_api_request(request_body)
     validate_silverpop_success!(doc, "Failure to update contact")
     result_dom(doc).elements['MAILING_ID'].first.to_s
+  end
+
+  def import_list(data, options = {})
+    fields = data.first.keys
+
+    import_map_file = list_import_map(fields, options)
+    upload_file(import_map_file, "list_import_map.xml")
+
+    import_file = list_import_file(data, fields)
+    upload_file(import_file, "list.csv")
+
+    request_body = String.new
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope{
+      xml.Body{
+        xml.ImportList{
+          xml.MAP_FILE "list_import_map.xml"
+          xml.SOURCE_FILE "list.csv"
+        }
+      }
+    }
+
+    doc = send_xml_api_request(request_body)
+    validate_silverpop_success!(doc, "Failure to start import job")
+    result_dom(doc).elements['JOB_ID'].first.to_s
+  end
+
+  def list_import_file(data, fields)
+    import_file = Tempfile.new('list_import_data')
+
+    CSV.open(import_file, "wb") do |csv|
+      csv << fields
+
+      data.each do |object|
+        array = fields.map { |field| object[field] }
+
+        csv << array
+      end
+    end
+
+    import_file.flush
+    import_file.close
+
+    import_file.path
+  end
+
+  def list_import_map(fields, options)
+    list_id      = options.delete('list_id')
+
+    map_file = Tempfile.new('list_import_map')
+
+    xml = Builder::XmlMarkup.new(:target => map_file, :indent => 1)
+
+    xml.instruct!
+    xml.LIST_IMPORT{
+      xml.LIST_INFO{
+        xml.ACTION "ADD_AND_UPDATE"
+        xml.LIST_ID list_id
+        xml.FILE_TYPE 0 # CSV == 0
+        xml.HASHEADERS "true"
+      }
+      xml.MAPPING{
+        fields.each_with_index do |field, index|
+          xml.COLUMN{
+            xml.INDEX index + 1
+            xml.NAME field
+            xml.INCLUDE "true"
+          }
+        end
+      }
+    }
+
+    map_file.flush
+    map_file.close
+
+    map_file.path
   end
 
   protected
