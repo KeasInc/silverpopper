@@ -277,6 +277,7 @@ module Silverpopper::XmlApi
         xml.GetLists{
           xml.VISIBILITY visibility
           xml.LIST_TYPE list_type
+          xml.INCLUDE_ALL_LISTS true
         }
       }
     }
@@ -305,7 +306,7 @@ module Silverpopper::XmlApi
               xml.COLUMN {
                 xml.NAME field['name']
                 xml.TYPE field['type']
-                xml.KEY_COLUMN "true" if field['key']
+                xml.KEY_COLUMN true if field['key']
               }
             end
           }
@@ -388,14 +389,14 @@ module Silverpopper::XmlApi
         xml.ACTION "ADD_AND_UPDATE"
         xml.tag!("#{import_type}_ID", list_id)
         xml.FILE_TYPE 0 # CSV == 0
-        xml.HASHEADERS "true"
+        xml.HASHEADERS true
       }
       xml.MAPPING{
         fields.each_with_index do |field, index|
           xml.COLUMN{
             xml.INDEX index + 1
             xml.NAME field
-            xml.INCLUDE "true"
+            xml.INCLUDE true
           }
         end
       }
