@@ -319,13 +319,23 @@ module Silverpopper::XmlApi
   end
 
   def import_list(data, options = {})
+    import(data, options.merge('import_type' => 'LIST'))
+  end
+
+  def import_table(data, options = {})
+    import(data, options.merge('import_type' => 'TABLE'))
+  end
+
+  def import(data, options = {})
+    type = options['import_type']
+
     fields = data.first.keys
 
-    import_map_file = list_import_map(fields, options)
-    upload_file(import_map_file, "list_import_map.xml")
+    import_map_file = import_map(fields, options)
+    upload_file(import_map_file, "#{type}_import_map.xml")
 
-    import_file = list_import_file(data, fields)
-    upload_file(import_file, "list.csv")
+    import_file = import_file(data, fields)
+    upload_file(import_file, "#{type}_data.csv")
 
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
@@ -333,9 +343,9 @@ module Silverpopper::XmlApi
     xml.instruct!
     xml.Envelope{
       xml.Body{
-        xml.ImportList{
-          xml.MAP_FILE "list_import_map.xml"
-          xml.SOURCE_FILE "list.csv"
+        xml.tag!("Import#{type.capitalize}"){
+          xml.MAP_FILE "#{type}_import_map.xml"
+          xml.SOURCE_FILE "#{type}_data.csv"
         }
       }
     }
@@ -345,7 +355,7 @@ module Silverpopper::XmlApi
     result_dom(doc).elements['JOB_ID'].first.to_s
   end
 
-  def list_import_file(data, fields)
+  def import_file(data, fields)
     import_file = Tempfile.new('list_import_data')
 
     CSV.open(import_file, "wb") do |csv|
@@ -364,18 +374,19 @@ module Silverpopper::XmlApi
     import_file.path
   end
 
-  def list_import_map(fields, options)
-    list_id      = options.delete('list_id')
+  def import_map(fields, options)
+    list_id      = options['list_id']
+    import_type  = options['import_type']
 
-    map_file = Tempfile.new('list_import_map')
+    map_file = Tempfile.new('import_map')
 
     xml = Builder::XmlMarkup.new(:target => map_file, :indent => 1)
 
     xml.instruct!
-    xml.LIST_IMPORT{
-      xml.LIST_INFO{
+    xml.tag!("#{import_type}_IMPORT"){
+      xml.tag!("#{import_type}_INFO"){
         xml.ACTION "ADD_AND_UPDATE"
-        xml.LIST_ID list_id
+        xml.tag!("#{import_type}_ID", list_id)
         xml.FILE_TYPE 0 # CSV == 0
         xml.HASHEADERS "true"
       }
