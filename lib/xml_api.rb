@@ -256,9 +256,17 @@ module Silverpopper::XmlApi
     result_dom(doc).elements['MAILING_ID'].first.to_s
   end
 
+  def get_databases(options = {})
+    get_lists(options.merge('list_type' => 0))
+  end
+
+  def get_tables(options = {})
+    get_lists(options.merge('list_type' => 15))
+  end
+
   def get_lists(options = {})
     visibility = options.delete('visibility') || 1 # shared
-    list_type  = options.delete('visibility') || 0 # databases
+    list_type  = options.delete('list_type')
 
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
@@ -281,6 +289,33 @@ module Silverpopper::XmlApi
       lists << List.new(l.elements["ID"].first, l.elements["NAME"].first)
     }
     lists
+  end
+
+  def create_table(table_name, fields)
+    request_body = String.new
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope{
+      xml.Body{
+        xml.CreateTable{
+          xml.TABLE_NAME table_name
+          xml.COLUMNS {
+            fields.each do |field|
+              xml.COLUMN {
+                xml.NAME field['name']
+                xml.TYPE field['type']
+                xml.KEY_COLUMN "true" if field['key']
+              }
+            end
+          }
+        }
+      }
+    }
+
+    doc = send_xml_api_request(request_body)
+    validate_silverpop_success!(doc, "Failure to create table")
+    result_dom(doc).elements['TABLE_ID'].first.to_s
   end
 
   def import_list(data, options = {})
