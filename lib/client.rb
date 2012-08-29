@@ -24,6 +24,11 @@ class Silverpopper::Client
     @api_url      = options.has_key?('api_url')      ? options['api_url']      : "http://api#{@pod}.silverpop.com"
     @ftp_host     = options.has_key?('ftp_host')     ? options['ftp_host']     : "transfer#{@pod}.silverpop.com"
     @transact_url = options.has_key?('transact_url') ? options['transact_url'] : "http://transact#{@pod}.silverpop.com"
+    @debug        = !!options['debug']
+  end
+
+  def debug?
+    @debug
   end
 
   protected
