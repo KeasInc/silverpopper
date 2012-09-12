@@ -238,10 +238,10 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     s.login
 
-    assert_equal "108518", s.import_list([{ "Data" => "Here"}])
+    assert_equal "108518", s.import([{ "Data" => "Here"}], 'import_type' => "LIST")
 
     assert_equal "/upload/list_import_map.xml", sftp.uploads[0].last
-    assert_equal "/upload/list.csv", sftp.uploads[1].last
+    assert_equal "/upload/list_data.csv", sftp.uploads[1].last
   end
 
   def test_import_mapping
@@ -249,7 +249,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     fields = ["FirstName", "LastName", "UserID"]
 
-    data = File.read s.list_import_map(fields, "list_id" => "12345")
+    data = File.read s.import_map(fields, "list_id" => "12345", 'import_type' => "LIST")
 
     assert_equal import_mapping_file, data
   end
@@ -261,7 +261,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     fields = ["LastName", "FirstName", "UserID"]
 
-    data = File.read s.list_import_file(data, fields)
+    data = File.read s.import_file(data, fields)
 
     assert_equal "LastName,FirstName,UserID\nFisher,Thomas,1\nKaufman,Bill,2\n", data
   end
@@ -654,7 +654,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
  <Body>
   <ImportList>
    <MAP_FILE>list_import_map.xml</MAP_FILE>
-   <SOURCE_FILE>list.csv</SOURCE_FILE>
+   <SOURCE_FILE>list_data.csv</SOURCE_FILE>
   </ImportList>
  </Body>
 </Envelope>
