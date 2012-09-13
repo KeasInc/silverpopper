@@ -7,7 +7,7 @@ class Silverpopper::Client
   include Silverpopper::Common
 
   # user_name to log into silverpop with
-  attr_reader :user_name, :ftp_host
+  attr_reader :user_name, :ftp_host, :proxy_url
 
   # pod to use, this should be a number and is used to build the url
   # to make api calls to
@@ -21,7 +21,8 @@ class Silverpopper::Client
     @user_name    = options['user_name']
     @password     = options['password']
     @pod          = options['pod'] || 5
-    @api_url      = options.has_key?('api_url')      ? options['api_url']      : "http://api#{@pod}.silverpop.com"
+    @api_url      = options.has_key?('api_url')      ? options['api_url']       : "http://api#{@pod}.silverpop.com"
+    @proxy_url    = options['proxy_url']             ? URI.parse(options['proxy_url']) : nil
     @ftp_host     = options.has_key?('ftp_host')     ? options['ftp_host']     : "transfer#{@pod}.silverpop.com"
     @transact_url = options.has_key?('transact_url') ? options['transact_url'] : "http://transact#{@pod}.silverpop.com"
     @debug        = !!options['debug']
