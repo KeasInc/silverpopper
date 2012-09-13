@@ -26,7 +26,13 @@ module Silverpopper::TransactApi
         options.each do |key, value|
           xml.PERSONALIZATION{
             xml.TAG_NAME key.to_s
-            xml.VALUE value
+            xml.VALUE{
+              if value =~ /[<&>'"]/
+                xml.cdata!(value)
+              else
+                value
+              end
+            }
           }
         end
       }
