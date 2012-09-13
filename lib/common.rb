@@ -12,7 +12,7 @@ module Silverpopper::Common
     options[:body] = markup
     options[:headers] = { 'Content-type' => 'text/xml;charset=UTF-8', 'X-Intended-Host' => api_host + @pod.to_s }
     if proxy_url
-      options[:http_proxyaddr] = proxy_url.api_host
+      options[:http_proxyaddr] = proxy_url.host
       options[:http_proxyport] = proxy_url.port
       options[:http_proxyuser] = proxy_url.user
       options[:http_proxypass] = proxy_url.password
