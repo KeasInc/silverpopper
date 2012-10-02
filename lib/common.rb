@@ -19,7 +19,11 @@ module Silverpopper::Common
     end
 
     resp = HTTParty.post(url, options)
-    raise "Request Failed" unless resp.code == 200 || resp.code == 201
+    if resp.code != 200 && resp.code != 201
+      log('[silverpopper] Request failed: ')
+      log(resp.body)
+      raise "Request Failed"
+    end
 
     log "[silverpopper] Got response: "
     log resp.body
@@ -30,7 +34,7 @@ module Silverpopper::Common
   def log(msg)
     if debug?
       if defined?(Rails)
-        Rails.logger.info(msg)
+        Rails.logger.error(msg)
       else
         puts msg
       end
