@@ -330,12 +330,22 @@ module Silverpopper::XmlApi
   def import(data, options = {})
     type = options['import_type']
 
-    fields = data.first.keys
+    if data.respond_to?(:rewind)
+      import_file = data
+      import_file.rewind
+
+      csv = CSV.open(data, :headers => true)
+      row = csv.first
+      fields = row.headers
+      import_file.rewind
+    else
+      fields = data.first.keys
+
+      import_file = import_file(data, fields)
+    end
 
     import_map_file = import_map(fields, options)
     upload_file(import_map_file, "#{type.downcase}_import_map.xml")
-
-    import_file = import_file(data, fields)
     upload_file(import_file, "#{type.downcase}_data.csv")
 
     request_body = String.new
