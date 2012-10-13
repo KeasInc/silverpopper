@@ -344,9 +344,11 @@ module Silverpopper::XmlApi
       import_file = import_file(data, fields)
     end
 
+    basename = "#{options['list_id']}_#{Time.now.to_i}_#{type.downcase}"
+
     import_map_file = import_map(fields, options)
-    upload_file(import_map_file, "#{type.downcase}_import_map.xml")
-    upload_file(import_file, "#{type.downcase}_data.csv")
+    upload_file(import_map_file, "#{basename}_import_map.xml")
+    upload_file(import_file, "#{basename}_data.csv")
 
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
@@ -355,8 +357,8 @@ module Silverpopper::XmlApi
     xml.Envelope{
       xml.Body{
         xml.tag!("Import#{type.capitalize}"){
-          xml.MAP_FILE "#{type.downcase}_import_map.xml"
-          xml.SOURCE_FILE "#{type.downcase}_data.csv"
+          xml.MAP_FILE "#{basename}_import_map.xml"
+          xml.SOURCE_FILE "#{basename}_data.csv"
         }
       }
     }
