@@ -260,6 +260,10 @@ module Silverpopper::XmlApi
     get_lists(options.merge('list_type' => 0))
   end
 
+  def get_supression_lists(options = {})
+    get_lists(options.merge('list_type' => 13))
+  end
+
   def get_tables(options = {})
     get_lists(options.merge('list_type' => 15))
   end
