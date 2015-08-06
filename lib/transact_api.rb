@@ -11,6 +11,7 @@ module Silverpopper::TransactApi
     email          = options.delete(:email)
     transaction_id = options.delete(:transaction_id)
     campaign_id    = options.delete(:campaign_id)
+    save_columns   = options.delete(:save_columns)
 
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
@@ -20,6 +21,11 @@ module Silverpopper::TransactApi
       xml.CAMPAIGN_ID campaign_id
       xml.TRANSACTION_ID transaction_id if transaction_id
       xml.SEND_AS_BATCH 'false'
+      save_columns.each do |value|
+        xml.SAVE_COLUMNS{
+          xml.COLUMN_NAME value
+        }
+      end
       xml.RECIPIENT{
         xml.EMAIL email
         xml.BODY_TYPE 'HTML'
