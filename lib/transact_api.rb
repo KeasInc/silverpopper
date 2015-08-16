@@ -11,7 +11,7 @@ module Silverpopper::TransactApi
     email          = options.delete(:email)
     transaction_id = options.delete(:transaction_id)
     campaign_id    = options.delete(:campaign_id)
-    save_columns   = options.delete(:save_columns)
+    save_columns   = options.delete(:save_columns) || []
 
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
